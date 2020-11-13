@@ -51,12 +51,13 @@ bool isBracket(char o) {
 void isStandardizedExpression(string s) {
     if (!(isdigit(s[0]) || s[0] == '(' || s[0] == '[' || s[0] == '{')) throw "Invalid expression: front";  // expression has spaces at the front/back
     if (!(isdigit(s[s.length() - 1]) || s[s.length() - 1] == ')' || s[s.length() - 1] == ']' || s[s.length() - 1] == '}')) throw "Invalid expression: back";
-    for (int i = 1; i < s.length() - 1; ++i) {
+    for (int i = 0; i < s.length(); ++i) {
         if (!isdigit(s[i]) && !isBracket(s[i]) && !isOperator(s[i]) && s[i] != '.' && !isblank(s[i]))
             throw "Invalid expression";
-        if (i > 0 && i < s.length() - 1) {
-            if ((s[i] == '(' || s[i] == '[' || s[i] == '{') && !isdigit(s[i + 1])) throw "Invalid bracket - digit";
+        if (i < s.length() -1 && (s[i] == '(' || s[i] == '[' || s[i] == '{') && !isdigit(s[i + 1])) throw "Invalid bracket - digit";
+        if (i > 0) {
             if ((s[i] == ')' || s[i] == ']' || s[i] == '}') && !isdigit(s[i - 1])) throw "Invalid digit - bracket";
+            if(i < s.length() - 1)
             if (isOperator(s[i]) && (!isblank(s[i - 1]) || !isblank(s[i + 1])))  // no space around operator
                 throw "Invalid expression: spaces around operator";
             if (isblank(s[i]) && isblank(s[i + 1])) throw "Invalid expression: spaces";  // double spaces '  '
@@ -354,7 +355,7 @@ void exec(char* argv[]) {
                 isStandardizedExpression(exp);
                 if (!strcmp(argv[3], "-c")) {
                     double ans = calcInfix(exp);
-                    fout << setprecision(2) << ans << endl;
+                    fout << fixed << setprecision(2) << ans << endl;
                 } else if (!strcmp(argv[3], "-t")) {
                     string ans = infix2Postfix(exp);
                     fout << ans << endl;
@@ -368,7 +369,7 @@ void exec(char* argv[]) {
     fout.close();
 }
 int main(int argc, char* argv[]) {
-    //test("7 ^ 2 + (5 ^ 8)");
-    exec(argv);
+    test("( 2.3)");
+    //exec(argv);
     return 0;
 }
