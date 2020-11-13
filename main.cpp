@@ -15,13 +15,13 @@ using namespace std;
 /// Check whether input string is a number or not.
 /// Return true if input string is a number or false, vice versa.
 bool isNum(string num) {
-    if (num.back() == '.' || num.front() == '.') return false;  // Check whether there is dot at the front/back of the string
+    if (num[num.length()-1] == '.' || num[0] == '.') return false;  // Check whether there is dot at the front/back of the string
     bool dotted = false;
     for (int i = 0; i < num.length(); ++i) {
-        if ((!isdigit(num[i]) && !(num[i] == '.')) ||           // Whether a char is not digit or a dot(.)
-            (num[i] == '.' && dotted))                          // There are 2 dots in the string
+        if ((!isdigit(num[i]) && !(num[i] == '.')) ||               // Whether a char is not digit or a dot(.)
+            (num[i] == '.' && dotted))                              // There are 2 dots in the string
             return false;
-        if (num[i] == '.') {                                    // Input number with number of decimal digit > 2
+        if (num[i] == '.') {                                        // Input number with number of decimal digit > 2
             if (i < num.length() - 1 - 2)
                 return false;
             dotted = true;
@@ -48,11 +48,11 @@ bool isBracket(char o) {
 /// Check whether input expression is valid
 /// return true if input expression is valid or false, vice versa
 void isStandardizedExpression(string s) {
-    if (s.front() == ' ' || s.back() == ' ') throw "Invalid expression: front | back";  // expression has spaces at the front/back
+    if (s[0] == ' ' || s[s.length()-1] == ' ') throw "Invalid expression: front | back";    // expression has spaces at the front/back
     for (int i = 1; i < s.length() - 1; ++i) {
-        if (isOperator(s[i]) && (s[i - 1] != ' ' || s[i + 1] != ' '))                   // no space around operator
+        if (isOperator(s[i]) && (s[i - 1] != ' ' || s[i + 1] != ' '))                       // no space around operator
             throw "Invalid expression: spaces around operator";
-        if (s[i] == ' ' && s[i + 1] == ' ') throw "Invalid expression: spaces";         // double spaces '  '
+        if (s[i] == ' ' && s[i + 1] == ' ') throw "Invalid expression: spaces";             // double spaces '  '
     }
 }
 
@@ -172,23 +172,24 @@ double calcInfix(string exp) {
         }
         if (exp[0] == ')' || exp[0] == ']' || exp[0] == '}') {                      // meet a close operator
             while (!operatorStack.empty() && !isBracket(operatorStack.top())) {     // calculate all expression inside the bracket
-                double val2 = operandStack.top();
+                double val2 = operandStack.top();                                   // take 2 value in operand stack
                 operandStack.pop();
                 double val1 = operandStack.top();
                 operandStack.pop();
                 char op = operatorStack.top();
                 operatorStack.pop();
-                if (!isOperator(op))
+                if (!isOperator(op))                                                // valid operator
                     throw "Invalid operator";
                 else
-                    operandStack.push(calculate(val1, val2, op));
+                    operandStack.push(calculate(val1, val2, op));                   // calculate 2 val with operator
             }
-            if (!isPairBracket(bracketStack.top(), exp[0]) || !isPairBracket(operatorStack.top(), exp[0])) throw "Bracket pair invalid!";
+            if (!isPairBracket(bracketStack.top(), exp[0]) ||                       // valid open-close bracket
+            !isPairBracket(operatorStack.top(), exp[0])) throw "Bracket pair invalid!";
             bracketStack.pop();
             operatorStack.pop();
             exp.erase(0, 1);
         }
-        if (isOperator(exp[0])) {
+        if (isOperator(exp[0])) {                                                   // meet an operator, do like above
             if (!lastOp) throw "Infix invalid: Double operator catched!";
             lastOp = false;
             while (!operatorStack.empty() &&
@@ -208,7 +209,7 @@ double calcInfix(string exp) {
             exp.erase(0, 1);
         }
     }
-    while (!operatorStack.empty()) {
+    while (!operatorStack.empty()) {                        // calculate all existing operators/operands in stack
         double val2 = operandStack.top();
         operandStack.pop();
         double val1 = operandStack.top();
@@ -220,9 +221,13 @@ double calcInfix(string exp) {
         else
             operandStack.push(calculate(val1, val2, op));
     }
-    return operandStack.top();
+    return operandStack.top();                              // the answer is the operand top element in stack
 }
 
+/// function infix2Postfix
+/// input an infix expression
+/// convert to postfix expression
+/// algorithm nearly like function calcInfix()
 string infix2Postfix(string exp) {
     bool lastOp = false;
     string ans = "";
