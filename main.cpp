@@ -368,7 +368,7 @@ void exec(char* argv[]) {
     fout.close();
 }
 int main(int argc, char* argv[]) {
-    testfile("-c");
-    //exec(argv);
+    //test("7 ^ 2 + (5 ^ 8)");
+    exec(argv);
     return 0;
 }
