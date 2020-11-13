@@ -2,7 +2,8 @@
     "files.associations": {
         "xstring": "cpp",
         "iostream": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "cmath": "cpp"
     },
     "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0}"
 }
