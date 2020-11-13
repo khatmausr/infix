@@ -1,26 +1,35 @@
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <stack>
 #include <string>
 #include <vector>
-#include <cmath>
 
 using namespace std;
 
-struct answerCalcInfix {
-    double val;
-    bool isSuccess;
-};
+bool isNum(string num) {
+    if(num.back() == '.') return false;
+    bool dotted = false;
+    for (int i = 0; i < num.length(); ++i) {
+        if ((!isdigit(num[i]) && !num[i] == '.') ||
+            num[i] == '.' && dotted)
+            return false;
+        if (num[i] == '.') {
+            if (i < num.length() - 1 - 2)
+                return false;
+            dotted = true;
+        }
+    }
+    return true;
+}
 
-struct answerCovertInfix {
-    string val;
-    bool isSuccess;
-};
+bool isOperator(char o) {
+    return (o == '^' || o == '*' || o == '/' || o == '+' || o == '-');
+}
 
-struct answerConvNumber {
-    double val;
-    bool isSuccess;
-};
+bool isBracket(char o){
+    return (o == '(' || o == ')' || o == '[' || o == ']' || o == '{' || o == '}');
+}
 
 vector<string> readExp(string input_file, unsigned int limit) {
     ifstream fin(input_file);
@@ -48,51 +57,34 @@ void standardizedExpression(string *s) {
 unsigned short precedence(char o) {
     switch (o) {
         case '^':
-            return 4;
+            return 3;
             break;
         ////////////////
         case '*':
         case '/':
-            return 3;
+            return 2;
             break;
         ////////////////
         case '+':
         case '-':
-            return 2;
-            break;
-        ////////////////
-        case ')':
             return 1;
             break;
     }
     return 0;
 }
 
-bool isNum(string num) {
-    bool dotted = false;
-    for (int i = 0; i < num.length(); ++i) {
-        if ((!isdigit(num[i]) && !num[i] == '.') ||
-            num[i] == '.' && dotted)
-            return false;
-        if (num[i] == '.') {
-            if (i < num.length() - 1 - 2)
-                return false;
-            dotted = true;
-        }
-    }
-    return true;
-}
-
-bool isOperator(char o) {
-    if (o == '^' || o == '*' || o == '/' || o == '+' || o == '-')
-        return true;
-    return false;
-}
-
 double convertNumber(string num) {
     if (!isNum(num))
         throw "Number invalid!";
     return stod(num);
+}
+
+bool isPairBracket(char openB, char closeB) {
+    if ((closeB == ')' && openB != '(') ||
+        (closeB == ']' && openB != '[') ||
+        (closeB == '}' && openB != '{'))
+        return false;
+    return true;
 }
 
 double calculate(double val1, double val2, char op) {
@@ -126,7 +118,8 @@ double calcInfix(string exp) {
     while (!exp.empty()) {
         if (isblank(exp[0])) exp.erase(0, 1);
         if (isdigit(exp[0])) {
-            size_t delim = exp.find(' ');
+            int delim = 0;
+            while(isdigit(exp[delim]) || exp[delim] == '.') ++delim;
             double operand = convertNumber(exp.substr(0, delim));
             operandStack.push(operand);
             exp.erase(0, delim);
@@ -134,6 +127,21 @@ double calcInfix(string exp) {
         if (exp[0] == '(' || exp[0] == '[' || exp[0] == '{') {
             operatorStack.push(exp[0]);
             exp.erase(0, 1);
+        }
+        if (exp[0] == ')' || exp[0] == ']' || exp[0] == '}') {
+            while(!operatorStack.empty() && !isBracket(operatorStack.top())){
+                double val2 = operandStack.top();
+                operandStack.pop();
+                double val1 = operandStack.top();
+                operandStack.pop();
+                char op = operatorStack.top();
+                operatorStack.pop();
+                operandStack.push(calculate(val1,val2,op));
+            }
+            char bracket = operatorStack.top();
+            operatorStack.pop();
+            if(!isPairBracket(bracket,exp[0])) throw "Bracket order invalid!";
+            exp.erase(0,1);
         }
         if (isOperator(exp[0])) {
             while (!operatorStack.empty() &&
@@ -163,10 +171,15 @@ double calcInfix(string exp) {
 }
 
 int main() {
-    string exp;
-    getline(cin, exp, '\n');
-    standardizedExpression(&exp);
-    double ans = calcInfix(exp);
-    cout << ans << endl;
+    string exp = "(1.22 + 0.78) ^ 3";
+    //getline(cin, exp, '\n');
+    try {
+        standardizedExpression(&exp);
+        double ans = calcInfix(exp);
+        cout << ans << endl;
+    } catch (char const* e) {
+        cout << e;
+    }
+
     return 0;
 }
