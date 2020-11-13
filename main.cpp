@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "stdio.h"
 #include "stdlib.h"
 
 using namespace std;
@@ -15,13 +16,13 @@ using namespace std;
 /// Check whether input string is a number or not.
 /// Return true if input string is a number or false, vice versa.
 bool isNum(string num) {
-    if (num[num.length()-1] == '.' || num[0] == '.') return false;  // Check whether there is dot at the front/back of the string
+    if (num[num.length() - 1] == '.' || num[0] == '.') return false;  // Check whether there is dot at the front/back of the string
     bool dotted = false;
     for (int i = 0; i < num.length(); ++i) {
-        if ((!isdigit(num[i]) && !(num[i] == '.')) ||               // Whether a char is not digit or a dot(.)
-            (num[i] == '.' && dotted))                              // There are 2 dots in the string
+        if ((!isdigit(num[i]) && !(num[i] == '.')) ||  // Whether a char is not digit or a dot(.)
+            (num[i] == '.' && dotted))                 // There are 2 dots in the string
             return false;
-        if (num[i] == '.') {                                        // Input number with number of decimal digit > 2
+        if (num[i] == '.') {  // Input number with number of decimal digit > 2
             if (i < num.length() - 1 - 2)
                 return false;
             dotted = true;
@@ -48,11 +49,18 @@ bool isBracket(char o) {
 /// Check whether input expression is valid
 /// return true if input expression is valid or false, vice versa
 void isStandardizedExpression(string s) {
-    if (s[0] == ' ' || s[s.length()-1] == ' ') throw "Invalid expression: front | back";    // expression has spaces at the front/back
+    if (!(isdigit(s[0]) || s[0] == '(' || s[0] == '[' || s[0] == '{')) throw "Invalid expression: front";  // expression has spaces at the front/back
+    if (!(isdigit(s[s.length() - 1]) || s[s.length() - 1] == ')' || s[s.length() - 1] == ']' || s[s.length() - 1] == '}')) throw "Invalid expression: back";
     for (int i = 1; i < s.length() - 1; ++i) {
-        if (isOperator(s[i]) && (s[i - 1] != ' ' || s[i + 1] != ' '))                       // no space around operator
-            throw "Invalid expression: spaces around operator";
-        if (s[i] == ' ' && s[i + 1] == ' ') throw "Invalid expression: spaces";             // double spaces '  '
+        if (!isdigit(s[i]) && !isBracket(s[i]) && !isOperator(s[i]) && s[i] != '.' && !isblank(s[i]))
+            throw "Invalid expression";
+        if (i > 0 && i < s.length() - 1) {
+            if ((s[i] == '(' || s[i] == '[' || s[i] == '{') && !isdigit(s[i + 1])) throw "Invalid bracket - digit";
+            if ((s[i] == ')' || s[i] == ']' || s[i] == '}') && !isdigit(s[i - 1])) throw "Invalid digit - bracket";
+            if (isOperator(s[i]) && (!isblank(s[i - 1]) || !isblank(s[i + 1])))  // no space around operator
+                throw "Invalid expression: spaces around operator";
+            if (isblank(s[i]) && isblank(s[i + 1])) throw "Invalid expression: spaces";  // double spaces '  '
+        }
     }
 }
 
@@ -123,6 +131,8 @@ bool isPairBracket(char openB, char closeB) {
 double calculate(double val1, double val2, char op) {
     switch (op) {
         case '^':
+            if(val1 < 0 && (val2 > -1 && val2 < 1))
+                throw "Wrong pow operation";
             return pow(val1, val2);
             break;
         case '*':
@@ -147,49 +157,51 @@ double calculate(double val1, double val2, char op) {
 /// function calcInfix
 /// calculate infix expression
 double calcInfix(string exp) {
-    bool lastOp = false;                                                            // true - operands / false - operator / default - false - make sure that we meet operands before operator
+    bool lastOp = false;  // true - operands / false - operator / default - false - make sure that we meet operands before operator
     stack<double> operandStack;
     stack<char> bracketStack;
     stack<char> operatorStack;
     while (!exp.empty()) {
-        if (isblank(exp[0])) exp.erase(0, 1);                                       // delete space
-        if (isdigit(exp[0])) {                                                      // meet a number
-            if (lastOp) throw "Infix invalid: Double number catched!";              // 2 operands next to each other (5 5 + 5)
+        if (!isdigit(exp[0]) && !isBracket(exp[0]) && !isOperator(exp[0]) && !isblank(exp[0]))
+            throw "Invalid character!";
+        if (isblank(exp[0])) exp.erase(0, 1);                           // delete space
+        if (isdigit(exp[0])) {                                          // meet a number
+            if (lastOp) throw "Infix invalid: Double number catched!";  // 2 operands next to each other (5 5 + 5)
             lastOp = true;
             int delim = 0;
-            while (isdigit(exp[delim]) || exp[delim] == '.') ++delim;               // find every characters of the number
-            double operand = convertNumber(exp.substr(0, delim));                   // convert it into double
-            operandStack.push(operand);                                             // push to operand stack
-            exp.erase(0, delim);                                                    // erase it
+            while (isdigit(exp[delim]) || exp[delim] == '.') ++delim;  // find every characters of the number
+            double operand = convertNumber(exp.substr(0, delim));      // convert it into double
+            operandStack.push(operand);                                // push to operand stack
+            exp.erase(0, delim);                                       // erase it
         }
-        if (exp[0] == '(' || exp[0] == '[' || exp[0] == '{') {                      // meet an open bracket
-            operatorStack.push(exp[0]);                                             // push to operator stack
+        if (exp[0] == '(' || exp[0] == '[' || exp[0] == '{') {  // meet an open bracket
+            operatorStack.push(exp[0]);                         // push to operator stack
             if (!bracketStack.empty() &&
-                bracketPrecedence(exp[0]) >= bracketPrecedence(bracketStack.top())) // inner bracket must lower precedence than the outter bracket
+                bracketPrecedence(exp[0]) >= bracketPrecedence(bracketStack.top()))  // inner bracket must lower precedence than the outter bracket
                 throw "Invalid bracket order!";
             bracketStack.push(exp[0]);  //
             exp.erase(0, 1);
         }
-        if (exp[0] == ')' || exp[0] == ']' || exp[0] == '}') {                      // meet a close operator
-            while (!operatorStack.empty() && !isBracket(operatorStack.top())) {     // calculate all expression inside the bracket
-                double val2 = operandStack.top();                                   // take 2 value in operand stack
+        if (exp[0] == ')' || exp[0] == ']' || exp[0] == '}') {                   // meet a close operator
+            while (!operatorStack.empty() && !isBracket(operatorStack.top())) {  // calculate all expression inside the bracket
+                double val2 = operandStack.top();                                // take 2 value in operand stack
                 operandStack.pop();
                 double val1 = operandStack.top();
                 operandStack.pop();
                 char op = operatorStack.top();
                 operatorStack.pop();
-                if (!isOperator(op))                                                // valid operator
+                if (!isOperator(op))  // valid operator
                     throw "Invalid operator";
                 else
-                    operandStack.push(calculate(val1, val2, op));                   // calculate 2 val with operator
+                    operandStack.push(calculate(val1, val2, op));  // calculate 2 val with operator
             }
-            if (!isPairBracket(bracketStack.top(), exp[0]) ||                       // valid open-close bracket
-            !isPairBracket(operatorStack.top(), exp[0])) throw "Bracket pair invalid!";
+            if ((!bracketStack.empty() && !isPairBracket(bracketStack.top(), exp[0])) ||  // valid open-close bracket
+                !isPairBracket(operatorStack.top(), exp[0])) throw "Bracket pair invalid!";
             bracketStack.pop();
             operatorStack.pop();
             exp.erase(0, 1);
         }
-        if (isOperator(exp[0])) {                                                   // meet an operator, do like above
+        if (isOperator(exp[0])) {  // meet an operator, do like above
             if (!lastOp) throw "Infix invalid: Double operator catched!";
             lastOp = false;
             while (!operatorStack.empty() &&
@@ -209,7 +221,7 @@ double calcInfix(string exp) {
             exp.erase(0, 1);
         }
     }
-    while (!operatorStack.empty()) {                        // calculate all existing operators/operands in stack
+    while (!operatorStack.empty()) {  // calculate all existing operators/operands in stack
         double val2 = operandStack.top();
         operandStack.pop();
         double val1 = operandStack.top();
@@ -221,7 +233,7 @@ double calcInfix(string exp) {
         else
             operandStack.push(calculate(val1, val2, op));
     }
-    return operandStack.top();                              // the answer is the operand top element in stack
+    return operandStack.top();  // the answer is the operand top element in stack
 }
 
 /// function infix2Postfix
@@ -234,6 +246,8 @@ string infix2Postfix(string exp) {
     stack<char> bracketStack;
     stack<char> operatorStack;
     while (!exp.empty()) {
+        if (!isdigit(exp[0]) && !isBracket(exp[0]) && !isOperator(exp[0]) && !isblank(exp[0]))
+            throw "Invalid character!";
         if (isblank(exp[0])) exp.erase(0, 1);
         if (isdigit(exp[0])) {
             if (lastOp) throw "Infix invalid: Double number catched!";
@@ -304,6 +318,31 @@ void test(string exp) {
     }
 }
 
+void testfile(char* option) {
+    ifstream fin("input.txt");
+    ofstream fout("output.txt");
+    int n = 10;
+    for (int i = 0; i < n; ++i) {
+        string exp;
+        if (getline(fin, exp, '\n')) {
+            try {
+                isStandardizedExpression(exp);
+                if (!strcmp(option, "-c")) {
+                    double ans = calcInfix(exp);
+                    fout << setprecision(2) << ans << endl;
+                } else if (!strcmp(option, "-t")) {
+                    string ans = infix2Postfix(exp);
+                    fout << ans << endl;
+                }
+            } catch (char const* e) {
+                fout << e << endl;
+            }
+        }
+    }
+    fin.close();
+    fout.close();
+}
+
 void exec(char* argv[]) {
     ifstream fin(argv[1]);
     ofstream fout(argv[4]);
@@ -329,7 +368,7 @@ void exec(char* argv[]) {
     fout.close();
 }
 int main(int argc, char* argv[]) {
-    //test("(1 + 1) ^ 3");
-    exec(argv);
+    testfile("-c");
+    //exec(argv);
     return 0;
 }
