@@ -54,9 +54,9 @@ void isStandardizedExpression(string s) {
     for (int i = 0; i < s.length(); ++i) {
         if (!isdigit(s[i]) && !isBracket(s[i]) && !isOperator(s[i]) && s[i] != '.' && !isblank(s[i]))
             throw "Invalid expression";
-        if (i < s.length() -1 && (s[i] == '(' || s[i] == '[' || s[i] == '{') && !isdigit(s[i + 1])) throw "Invalid bracket - digit";
+        if (i < s.length() -1 && (s[i] == '(' || s[i] == '[' || s[i] == '{') && !isdigit(s[i + 1]) && !isBracket(s[i+1])) throw "Invalid bracket - digit";
         if (i > 0) {
-            if ((s[i] == ')' || s[i] == ']' || s[i] == '}') && !isdigit(s[i - 1])) throw "Invalid digit - bracket";
+            if ((s[i] == ')' || s[i] == ']' || s[i] == '}') && !isdigit(s[i - 1]) && !isBracket(s[i-1])) throw "Invalid digit - bracket";
             if(i < s.length() - 1)
             if (isOperator(s[i]) && (!isblank(s[i - 1]) || !isblank(s[i + 1])))  // no space around operator
                 throw "Invalid expression: spaces around operator";
@@ -369,7 +369,7 @@ void exec(char* argv[]) {
     fout.close();
 }
 int main(int argc, char* argv[]) {
-    test("( 2.3)");
-    //exec(argv);
+    //test("[3 ^ (2 + 3)]");
+    exec(argv);
     return 0;
 }
