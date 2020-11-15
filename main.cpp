@@ -309,40 +309,6 @@ string infix2Postfix(string exp) {
     }
     return ans;
 }
-void test(string exp) {
-    try {
-        isStandardizedExpression(exp);
-        double ans = calcInfix(exp);
-        cout << setprecision(2) << ans << endl;
-    } catch (char const* e) {
-        cout << e << endl;
-    }
-}
-
-void testfile(char* option) {
-    ifstream fin("input.txt");
-    ofstream fout("output.txt");
-    int n = 10;
-    for (int i = 0; i < n; ++i) {
-        string exp;
-        if (getline(fin, exp, '\n')) {
-            try {
-                isStandardizedExpression(exp);
-                if (!strcmp(option, "-c")) {
-                    double ans = calcInfix(exp);
-                    fout << setprecision(2) << ans << endl;
-                } else if (!strcmp(option, "-t")) {
-                    string ans = infix2Postfix(exp);
-                    fout << ans << endl;
-                }
-            } catch (char const* e) {
-                fout << e << endl;
-            }
-        }
-    }
-    fin.close();
-    fout.close();
-}
 
 void exec(char* argv[]) {
     ifstream fin(argv[1]);
@@ -369,7 +335,6 @@ void exec(char* argv[]) {
     fout.close();
 }
 int main(int argc, char* argv[]) {
-    //test("[3 ^ (2 + 3)]");
     exec(argv);
     return 0;
 }
